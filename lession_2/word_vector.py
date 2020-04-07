@@ -1,8 +1,11 @@
+from __future__ import absolute_import, division, print_function
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import DataSets.datasets
+import sys
+sys.path.append(".")
 
+from datasets import word_dataset
 from collections import Counter
 import numpy as np
 import random
@@ -12,9 +15,6 @@ import pandas as pd
 import scipy
 import sklearn
 from sklearn.metrics.pairwise import cosine_similarity
-
-import sys
-sys.path.append('')
 
 USE_CUDA=torch.cuda.is_available()
 
@@ -39,21 +39,28 @@ with open("text8.train.txt","r") as fin:
     text=fin.read()
 
 text=text.split()
+
 vocab=dict(Counter(text).most_common(MAX_VOCAB_SIZE-1))
 vocab["<unk>"]=len(text)-np.sum(list(vocab.values()))
 
 idx_to_word=[word for word in vocab.keys()]
-word_to_idx={word:i for i,word in enumerate(idx_to_word)}
+word_to_idx={word:i for i,word in enumerate(idx_to_word)}#Q：跟vocab有不是一样吗？？？A：值是0,1,2而不是出现的次数了
 
 word_counts=np.array([count for count in vocab.values()],dtype=np.float32)
 word_freqs=word_counts/np.sum(word_counts)
 word_freqs=word_freqs**(3./4.)
-word_freqs=word_counts/np.sum(word_counts)#normalize???
+word_freqs=word_freqs/np.sum(word_freqs)#normalize,不是应该除word_freqs的叠加???
 VOCAB_SIZE=len(idx_to_word)
 
-dataset=DataSets.datasets.WordEmbeddingDataset(text,word_to_idx,idx_to_word,word_freqs,word_counts)
-dataloader=DataSets.datasets.tud.DataLoader(dataset,batch_size=BATCH_SIZE,shuffle=True,num_workers=4)
+dataset=word_dataset.WordEmbeddingDataset(text,word_to_idx,idx_to_word,word_freqs,word_counts)
+dataloader=word_dataset.tud.DataLoader(dataset,batch_size=BATCH_SIZE,shuffle=True,num_workers=4)
 
 
 
-print(VOCAB_SIZE)
+for i,(center_word,pos_words,neg_words) in enumerate(dataloader):
+    print(i,center_word,pos_words,neg_words)
+    if i>5:
+        break
+
+#print(list(vocab.items())[:100])
+#print(vocab["<unk>"])

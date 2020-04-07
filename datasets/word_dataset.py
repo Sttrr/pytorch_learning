@@ -19,10 +19,10 @@ class WordEmbeddingDataset(tud.Dataset):
         return len(self.text_encoded)
 
     def __getitem__(self,idx):
-        center_word=self.text_encoded[idx]
-        pos_indices=list(range(idx-C))+list(range(idx+1,idx+C+1))#window内单词index
+        center_word=self.text_encoded[idx]#中心词
+        pos_indices=list(range(idx-C,idx))+list(range(idx+1,idx+C+1))#window内单词index，不是idx-C到dix???
         pos_indices=[i%len(self.text_encoded) for i in pos_indices]#取余，防止超出text长度
         pos_words=self.text_encoded[pos_indices]#周围单词
-        neg_words=torch.multinomial(self.word_freqs,K*pos_words.shape[0],True)#负例采样
+        neg_words=torch.multinomial(self.word_freqs,K*pos_words.shape[0],True)#负例采样 这句可能有问题
 
         return center_word,pos_words,neg_words
